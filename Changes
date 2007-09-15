@@ -1,0 +1,6 @@
+Revision history for Perl extension CGI::Multiscript.
+
+0.70  Fri Sep 14 21:02:01 2007
+	- original version; created by h2xs 1.23 with options
+		-X -n CGI::Multiscript
+
