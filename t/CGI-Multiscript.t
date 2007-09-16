@@ -13,5 +13,12 @@ BEGIN { use_ok('CGI::Multiscript') };
 # Insert your test code below, the Test::More module is use()ed here so read
 # its man page ( perldoc Test::More ) for help writing this test script.
 
-CGI::Multiscript::execute("t/test_hello.ms", "vesion", "perl", "a");
+# CGI::Multiscript::setDefault("./");
+CGI::Multiscript::setDefault("sh ");
+print "Default execution ", CGI::Multiscript::getDefault(), "\n";
+$ms = CGI::Multiscript->new();
+$ms->setFilename("t/test_hello.ms");
+$ms->addLanguage('Perl');
+print "Current filename ", $ms->getFilename(), "\n";
+$ms->execute();
 

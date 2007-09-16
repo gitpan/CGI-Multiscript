@@ -30,111 +30,205 @@ our @EXPORT = qw(
 	
 );
 
-our $VERSION = '0.70';
+our $VERSION = '0.71';
 
 
 # Preloaded methods go here.
 our $writeflag = 0;
 our $tmpfilename;
 our $TMPFILE;
+our $default;
+
+sub new {
+        my ($filename) = @_;
+	my ($self) = { };
+	bless ($self);
+	$self->{'FILE'} = $filename;
+	return $self;
+}
+
+# set default language
+sub setDefault {
+	my ($value) = @_;
+	$default = $value;
+}
+
+sub getDefault {
+	return $default;
+}
+
+sub setFilename {
+        my ($self, $value) = @_;
+        $self->{'FILE'} = $value;
+}
+
+sub getFilename {
+        my ($self) = @_;
+        return $self->{'FILE'};
+}
+
+sub displayFilename {
+	my ($self) = @_;
+	print $self->{'FILE'}, "\n";
+}
+
+sub addLanguage {
+	my ($self, $lang, $args) = @_;
+	$self->{$lang} = $args;
+}
+
+sub addVersion {
+	my ($self, $version, $args) = @_;
+	$self->{$version} = $args;
+}
+
+sub addName {
+	my ($self, $version, $args) = @_;
+	$self->{$version} = $args;
+
+}
+
+sub get {
+        my ($self, $key) = @_;
+        return $self->{$key};
+}
+
+sub execMultiscript {
+	my ($self, $filename) = @_;
+
+}
 
 sub execute {
-my ($filename, $version, $lang, $pargs) = @_;
+my ($self) = @_;
 
+my $filename;
 my $line;
+my $currentLanguage;
+my $currentVersion;
+my $currentName;
+my $currentArgs;
 
-open (CODEFILE, $filename) or die "Can't open $filename";
+$filename = $self->{'FILE'};
+
+open (CODEFILE, $filename) or die "Can't Open Multiscript $filename";
     $tmpfilename = get_tmpfilename();
 
     # print "Creating a new script temp file $tmpfilename\n";
-    # print "Creating a new script temp file $tmpfilename\n";
     umask 077;
+    # umask 022;
     open ($TMPFILE, ">$tmpfilename") or die $!;
+
+    $currentLanguage = "";
+    $currentVersion = "";
+    $currentName = "";
+    $currentArgs = "";
 
     while ($line = <CODEFILE>) {
        # print $line;
-       if ($line =~ /^(<code ruby>\n)/) {
-           set_writeflag(1);
+       if ($line =~ /^<code\s+lang=["](\S+)["]\s+ver=["](\S+)["]\s+name=["](\S+)["]\s+args=["](\S+)["]>\n/) {
+		$currentLanguage = $1;
+		$currentVersion  = $2;
+		$currentName 	 = $3;
+		$currentArgs 	 = $4;
+		# print "Current ", $currentLanguage, " ", $currentVersion, "\n";
+           	set_writeflag(1);
        }
-       elsif ($line =~ /(^<\/code ruby>\n)/) {
-          clear_writeflag(1);
+       if ($line =~ /^<code\s+lang=["](\S+)["]>\n/) {
+       		# print "Current Code lang $line\n";
+       		$currentLanguage = $1;
+		$currentArgs = "";
+		set_writeflag(2);
        }
-       elsif ($line =~ /(^<code perl>\n)/) {
-           set_writeflag(2);
+       elsif ($line =~ /^<code>\n/) {
+       		# print "Current Code $line\n";
+		
+       		$currentLanguage = "";
+		$currentArgs = "";
+           	set_writeflag(3);
        }
-       elsif ($line =~ /(^<\/code perl>\n)/) {
-           clear_writeflag(2);
-       }
-       elsif ($line =~ /(^<code python>\n)/) {
-           set_writeflag(3);
-       }
-       elsif ($line =~ /(^<\/code python>\n)/) {
-           clear_writeflag(3);
-       }
-       elsif ($line =~ /(^<code>\n)/) {
-           set_writeflag(4);
-       }
-       elsif ($line =~ /(^<\/code>\n)/) {
-           clear_writeflag(4);
+       elsif ($line =~ /^<\/code>\n/) {
+           	clear_writeflag(1);
+		# if should run and is in argument list
+		execTmpfile($currentLanguage, $currentArgs);
+		truncateTmpfile();
+		$currentLanguage = "";
+		$currentVersion = "";
+		$currentName = "";
+		$currentArgs = "";
        }
        else
        {
           if ($writeflag != 0) {
+	      # print "Writing", $line;
 	      print $TMPFILE $line; 
 	  }
        }
       }
-# print "running the script\n";
-# system("perl $tmpfilename");
+
+
 close($TMPFILE);
 close(CODEFILE);
 unlink($tmpfilename);
 
 }
 
+# Create a temporary file
+# With a random name
 sub get_tmpfilename() {
-    my $tmpname;
-    my $random;
+	my $tmpname;
+	my $random;
 
-    $tmpname = ".ms.";
-    srand(time());
-    $random = rand();
-    $tmpname .= "$$";
-    $tmpname .= $random;
-    $tmpname .= ".tmp";
+	$tmpname = ".ms.";
+	srand(time());
+	$random = rand();
+	$tmpname .= "$$";
+	$tmpname .= $random;
+	$tmpname .= ".tmp";
 
-    print "tmpname = $tmpname\n";
+	# print "tmpname = $tmpname\n";
 
-    return ($tmpname);
+	return ($tmpname);
 
 }
 
 sub set_writeflag()
 {
-  # local $writeflag;
-  my $flag = $_[0];
-  if ($writeflag != 0) {
-      print "Code Error -- Not allowed nested code within code!!\n";
-      exit(1);
-  }
-  $writeflag = $flag; 
+	my $flag = $_[0];
+	if ($writeflag != 0) {
+	print "Code Error -- Not allowed nested code within code!!\n";
+		unlink($tmpfilename);
+		exit(1);
+	}
+	$writeflag = $flag; 
 
 }
 
 sub clear_writeflag()
 {
-  my $flag = $_[0];
-  my $returncode = 0;
-  if ($writeflag != $flag) {
-     print "Code Error -- Not allowed a different end tag to close a tag!!\n";
-  }
-  if ($writeflag == 1) { $returncode = system("ruby $tmpfilename"); }
-  if ($writeflag == 2) { $returncode = system("perl $tmpfilename"); } 
-  if ($writeflag == 3) { $returncode = system("python $tmpfilename"); } 
-  if ($writeflag == 4) { $returncode = system("tcsh $tmpfilename"); } 
-  seek($TMPFILE, 0, 0);
-  truncate($TMPFILE, 0);
-  $writeflag = 0;
+  	my $flag = $_[0];
+  	$writeflag = 0;
+}
+
+sub execTmpfile()
+{
+	my ($lang, $args) = @_;
+	my $returncode;
+	if (($lang eq "") && ($args eq "")) {
+		$returncode = system("$default$tmpfilename");
+	}
+	elsif (($lang ne "") && ($args eq "")) {
+		$returncode = system("$lang $tmpfilename");
+	}
+	elsif (($lang eq "") && ($args eq "")) {
+		$returncode = system("$default$tmpfilename $args");
+	}
+}
+
+
+sub truncateTmpfile()
+{
+	seek($TMPFILE, 0, 0);
+	truncate($TMPFILE, 0);
 }
 
 # Autoload methods go after =cut, and are processed by the autosplit program.
@@ -149,16 +243,28 @@ CGI::Multiscript - Perl extension for Multiscript programming
 
 =head1 SYNOPSIS
 
-  use CGI::Multiscript;
-  Multiscript::execute("test_hello.ms", "version", "perl", "args");
+use CGI::Multiscript;
+
+CGI::Multiscript::setDefault("./");
+CGI::Multiscript::setDefault("sh ");
+print "Default execution ", CGI::Multiscript::getDefault(), "\n";
+
+$ms = CGI::Multiscript::new("test_hello.ms");
+$ms->setFilename("t/test_hello.ms");
+$ms->addLanguage('Perl');
+print "Current filename ", $ms->getFilename(), "\n";
+
+$ms->execute();  
 
 =head1 DESCRIPTION
 
-- a Perl Module that allows for multi script programming from Perl scripts.
-The program will allow Perl, Python, Ruby or Shell or any other language to coexist in the same script. 
-The scripts can be given version attributes and are dillineated by tags. 
+CGI::Multiscript is a Perl Module that allows for Perl scripts to run and execute Multiscript files.
+CGI::Multiscript will allow Perl, Python, Ruby or Shell or any other language to coexist in the same external script. 
+The Multiscripts consist of multiple languages separated by code tags and attributes.
+Multiscript files can be executed from a Perl scripti that uses CGI::Multiscript.
  
-This program will run a multiscript program according to command options. 
+CGI::Multiscript will run an external multiscript program according to the execution options which
+include language, version, name and command line arguments. 
 
 
 =head2 EXPORT
@@ -169,15 +275,14 @@ The project page is mirrored on sourceforge.net and at http://www.mad-dragon.com
 
 http://mad-dragon.com/multiscript
 
-If you have a mailing list set up for your module, mention it here.
-
-If you have a web site set up for your module, mention it here.
 
 =head1 AUTHOR
 
 Nathan Ross, <lt>morgothii@cpan.org<gt>
 
 =head1 COPYRIGHT AND LICENSE
+
+GPL and Artistic
 
 Copyright (C) 2007 by Nathan Ross
 

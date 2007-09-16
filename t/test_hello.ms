@@ -1,21 +1,19 @@
-<code perl>
-#!/usr/local/perl
-
+<code lang="perl">
+#!/usr/bin/perl
 print "hello World perl\n";
-
-</code perl>
-<code python>
+</code>
+<code lang="python">
 #!/usr/local/python
 print "Hello World python"
-</code python>
-<code ruby>
+</code>
+<code lang="ruby" ver="X" name="ix"  args="x">
 puts "Hello World ruby"
-</code ruby>
-<code>
+</code>
+<code lang="tcsh">
 #!/usr/bin/tcsh
 echo "Hello World csh"
 </code>
-<code>
+<code lang="bash">
 #!/usr/bin/bash
 echo "Hello Shell"
 </code>
