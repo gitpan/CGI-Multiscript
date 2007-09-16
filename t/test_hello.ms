@@ -9,11 +9,11 @@ print "Hello World python"
 <code lang="ruby" ver="X" name="ix"  args="x">
 puts "Hello World ruby"
 </code>
-<code lang="tcsh">
+<code>
 #!/usr/bin/tcsh
 echo "Hello World csh"
 </code>
-<code lang="bash">
+<code>
 #!/usr/bin/bash
 echo "Hello Shell"
 </code>

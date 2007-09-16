@@ -1,6 +1,7 @@
 Revision history for Perl extension CGI::Multiscript.
-
+0.72  Sun Sep 16 14:27:23 2007
+	- Added language execution list and selection
+0.71  Sat Sep 15 22:05:12 2007
+	- Added new method and objects
 0.70  Fri Sep 14 21:02:01 2007
-	- original version; created by h2xs 1.23 with options
-		-X -n CGI::Multiscript
-
+	- original version; created by h2xs 1.23 with options -X -n CGI::Multiscript

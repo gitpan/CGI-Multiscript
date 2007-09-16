@@ -30,7 +30,7 @@ our @EXPORT = qw(
 	
 );
 
-our $VERSION = '0.71';
+our $VERSION = '0.72';
 
 
 # Preloaded methods go here.
@@ -41,51 +41,81 @@ our $default;
 
 sub new {
         my ($filename) = @_;
-	my ($self) = { };
+	my ($self) = {};
 	bless ($self);
 	$self->{'FILE'} = $filename;
+	$self->{'LANGS'} = 0;
 	return $self;
 }
 
-# set default language
+# set default language executor
 sub setDefault {
 	my ($value) = @_;
 	$default = $value;
 }
 
+# get the default language executor
 sub getDefault {
 	return $default;
 }
 
+# set the Multiscript filename to execute
 sub setFilename {
         my ($self, $value) = @_;
         $self->{'FILE'} = $value;
 }
 
+# get the current Multiscript filename
 sub getFilename {
         my ($self) = @_;
         return $self->{'FILE'};
 }
 
+# display the current Multiscript filename
 sub displayFilename {
 	my ($self) = @_;
 	print $self->{'FILE'}, "\n";
 }
 
+# add a language to the Multiscript execution list
 sub addLanguage {
 	my ($self, $lang, $args) = @_;
 	$self->{$lang} = $args;
+	# ++ ${ $self->{'LANGS'} };
+	$self->{'LANGS'}++;
 }
 
+# add a language version to the Multiscript execution list
 sub addVersion {
 	my ($self, $version, $args) = @_;
 	$self->{$version} = $args;
+	$self->{'LANGS'}++;
 }
 
+# add a language name to the Multiscript execution list
 sub addName {
 	my ($self, $version, $args) = @_;
 	$self->{$version} = $args;
+	$self->{'LANGS'}++;
 
+}
+
+# get the number of current languages in the execution list
+sub getNumberoflangs {
+	my ($self) = @_;
+	my $number;
+	$number = $self->{'LANGS'};
+	return $number;	
+}
+
+# display the number of languages in the execution list
+sub displayLangs {
+	my ($self) = @_;
+	print "There are ", $self->{'LANGS'}, " languages selected\n";
+	#foreach $ (keys %HASH) {
+	#    $value = $HASH{$key};
+	# do something with $key and $value
+	#}
 }
 
 sub get {
@@ -98,6 +128,7 @@ sub execMultiscript {
 
 }
 
+# exeute the current file in the Multiscript object
 sub execute {
 my ($self) = @_;
 
@@ -115,7 +146,6 @@ open (CODEFILE, $filename) or die "Can't Open Multiscript $filename";
 
     # print "Creating a new script temp file $tmpfilename\n";
     umask 077;
-    # umask 022;
     open ($TMPFILE, ">$tmpfilename") or die $!;
 
     $currentLanguage = "";
@@ -141,7 +171,6 @@ open (CODEFILE, $filename) or die "Can't Open Multiscript $filename";
        }
        elsif ($line =~ /^<code>\n/) {
        		# print "Current Code $line\n";
-		
        		$currentLanguage = "";
 		$currentArgs = "";
            	set_writeflag(3);
@@ -149,7 +178,19 @@ open (CODEFILE, $filename) or die "Can't Open Multiscript $filename";
        elsif ($line =~ /^<\/code>\n/) {
            	clear_writeflag(1);
 		# if should run and is in argument list
-		execTmpfile($currentLanguage, $currentArgs);
+		if ($self->{'LANGS'} == 0) {
+			execTmpfile($currentLanguage, $currentArgs);
+		}
+		elsif (exists $self->{$currentLanguage} ) {
+			# print "executing language $currentLanguage\n";
+			execTmpfile($currentLanguage, $currentArgs);
+		}
+		elsif (exists $self->{$currentName} ) {
+			execTmpfile($currentLanguage, $currentArgs);
+		}
+		elsif (exists $self->{$currentVersion} ) {
+			execTmpfile($currentLanguage, $currentArgs);
+		}
 		truncateTmpfile();
 		$currentLanguage = "";
 		$currentVersion = "";
@@ -248,13 +289,36 @@ use CGI::Multiscript;
 CGI::Multiscript::setDefault("./");
 CGI::Multiscript::setDefault("sh ");
 print "Default execution ", CGI::Multiscript::getDefault(), "\n";
+$ms = CGI::Multiscript::new('test_hello.ms');
 
-$ms = CGI::Multiscript::new("test_hello.ms");
-$ms->setFilename("t/test_hello.ms");
-$ms->addLanguage('Perl');
+$ms->addLanguage('perl');
+$ms->addLanguage('python');
+$ms->displayLangs();
+
 print "Current filename ", $ms->getFilename(), "\n";
+$ms->execute();
 
-$ms->execute();  
+Example Multiscript file:
+
+<code lang="perl">
+#!/usr/bin/perl
+print "hello World perl\n";
+</code>
+<code lang="python">
+#!/usr/local/python
+print "Hello World python"
+</code>
+<code lang="ruby" ver="X" name="ix"  args="x">
+puts "Hello World ruby"
+</code>
+<code>
+#!/usr/bin/tcsh
+echo "Hello World csh"
+</code>
+<code>
+#!/usr/bin/bash
+echo "Hello Shell"
+</code>
 
 =head1 DESCRIPTION
 
@@ -266,6 +330,8 @@ Multiscript files can be executed from a Perl scripti that uses CGI::Multiscript
 CGI::Multiscript will run an external multiscript program according to the execution options which
 include language, version, name and command line arguments. 
 
+The current methods are setDefault, getDefault, new, addLanguage, displayLangs, execute,
+addName, addVersion, getVersion, getFilename.
 
 =head2 EXPORT
 
@@ -278,7 +344,9 @@ http://mad-dragon.com/multiscript
 
 =head1 AUTHOR
 
-Nathan Ross, <lt>morgothii@cpan.org<gt>
+Nathan Ross 
+
+e-mail: morgothii@cpan.org
 
 =head1 COPYRIGHT AND LICENSE
 
