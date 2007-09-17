@@ -19,6 +19,7 @@ print "Default execution ", CGI::Multiscript::getDefault(), "\n";
 $ms = CGI::Multiscript::new('test_hello.ms');
 $ms->addLanguage('perl');
 $ms->addLanguage('python');
+$ms->parseArgs(@ARGV);
 $ms->displayLangs();
 print "Current filename ", $ms->getFilename(), "\n";
 

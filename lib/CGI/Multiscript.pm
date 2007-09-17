@@ -30,7 +30,7 @@ our @EXPORT = qw(
 	
 );
 
-our $VERSION = '0.72';
+our $VERSION = '0.73';
 
 
 # Preloaded methods go here.
@@ -81,7 +81,6 @@ sub displayFilename {
 sub addLanguage {
 	my ($self, $lang, $args) = @_;
 	$self->{$lang} = $args;
-	# ++ ${ $self->{'LANGS'} };
 	$self->{'LANGS'}++;
 }
 
@@ -111,11 +110,14 @@ sub getNumberoflangs {
 # display the number of languages in the execution list
 sub displayLangs {
 	my ($self) = @_;
+	my $keys = 0;
 	print "There are ", $self->{'LANGS'}, " languages selected\n";
-	#foreach $ (keys %HASH) {
-	#    $value = $HASH{$key};
-	# do something with $key and $value
-	#}
+	# print "The languages/versions/names scheduled for execution are:\n";
+	# while ($keys < $self->{'LANGS'})
+	# {
+	# print "$self->{'LANGS'}\n";
+	# $keys++;
+	# }
 }
 
 sub get {
@@ -123,8 +125,15 @@ sub get {
         return $self->{$key};
 }
 
-sub execMultiscript {
-	my ($self, $filename) = @_;
+# parse command line arguments into the language execution list
+sub parseArgs {
+	my ($self, @parseArgs) = @_;
+	my $argnum;
+	foreach $argnum (0 .. $#parseArgs) {
+	   # print "$ARGV[$argnum]\n";
+		$self->{$ARGV[$argnum]} = "";
+		$self->{'LANGS'}++;
+	}
 
 }
 
@@ -160,6 +169,7 @@ open (CODEFILE, $filename) or die "Can't Open Multiscript $filename";
 		$currentVersion  = $2;
 		$currentName 	 = $3;
 		$currentArgs 	 = $4;
+		$line = ""; # tmp fix
 		# print "Current ", $currentLanguage, " ", $currentVersion, "\n";
            	set_writeflag(1);
        }
@@ -167,10 +177,10 @@ open (CODEFILE, $filename) or die "Can't Open Multiscript $filename";
        		# print "Current Code lang $line\n";
        		$currentLanguage = $1;
 		$currentArgs = "";
+		$line = "";
 		set_writeflag(2);
        }
        elsif ($line =~ /^<code>\n/) {
-       		# print "Current Code $line\n";
        		$currentLanguage = "";
 		$currentArgs = "";
            	set_writeflag(3);
@@ -182,7 +192,6 @@ open (CODEFILE, $filename) or die "Can't Open Multiscript $filename";
 			execTmpfile($currentLanguage, $currentArgs);
 		}
 		elsif (exists $self->{$currentLanguage} ) {
-			# print "executing language $currentLanguage\n";
 			execTmpfile($currentLanguage, $currentArgs);
 		}
 		elsif (exists $self->{$currentName} ) {
@@ -254,15 +263,22 @@ sub execTmpfile()
 {
 	my ($lang, $args) = @_;
 	my $returncode;
+
+	# print "executing 1 $lang $tmpfilename\n";
+
 	if (($lang eq "") && ($args eq "")) {
 		$returncode = system("$default$tmpfilename");
 	}
 	elsif (($lang ne "") && ($args eq "")) {
 		$returncode = system("$lang $tmpfilename");
 	}
-	elsif (($lang eq "") && ($args eq "")) {
+	elsif (($lang eq "") && ($args ne "")) {
 		$returncode = system("$default$tmpfilename $args");
 	}
+	elsif (($lang ne "") && ($args ne "")) {
+		$returncode = system("$lang $tmpfilename $args");
+	}
+	
 }
 
 
@@ -290,7 +306,7 @@ CGI::Multiscript::setDefault("./");
 CGI::Multiscript::setDefault("sh ");
 print "Default execution ", CGI::Multiscript::getDefault(), "\n";
 $ms = CGI::Multiscript::new('test_hello.ms');
-
+$ms->parseArgs(@ARGV);
 $ms->addLanguage('perl');
 $ms->addLanguage('python');
 $ms->displayLangs();
@@ -330,8 +346,8 @@ Multiscript files can be executed from a Perl scripti that uses CGI::Multiscript
 CGI::Multiscript will run an external multiscript program according to the execution options which
 include language, version, name and command line arguments. 
 
-The current methods are setDefault, getDefault, new, addLanguage, displayLangs, execute,
-addName, addVersion, getVersion, getFilename.
+The current methods are setDefault, getDefault, new,  execute, parseArgs,
+addLanguage, addName, addVersion, displayLangs, getFilename, setFilename.
 
 =head2 EXPORT
 
