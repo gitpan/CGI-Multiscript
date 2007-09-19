@@ -30,7 +30,7 @@ our @EXPORT = qw(
 	
 );
 
-our $VERSION = '0.73';
+our $VERSION = '0.74';
 
 
 # Preloaded methods go here.
@@ -173,12 +173,27 @@ open (CODEFILE, $filename) or die "Can't Open Multiscript $filename";
 		# print "Current ", $currentLanguage, " ", $currentVersion, "\n";
            	set_writeflag(1);
        }
-       if ($line =~ /^<code\s+lang=["](\S+)["]>\n/) {
+       elsif ($line =~ /^<code\s+lang=["](\S+)["]>\n/) {
        		# print "Current Code lang $line\n";
        		$currentLanguage = $1;
 		$currentArgs = "";
 		$line = "";
 		set_writeflag(2);
+       }
+       # file tag has no code content
+       # Just an empty tag still experimental
+       elsif ($line =~ /^<code\s+file=["](\S+)["]\s+lang=["](\S+)["]\s+ver=["](\S+)["]>\n/) {
+       		
+      		# execute file 
+		$currentName = $1;
+		$currentLanguage = $2;
+		$currentVersion = $3;
+		system("$currentLanguage $currentName");
+		$line = "";
+		$currentLanguage = "";
+		$currentVersion = "";
+		$currentName = "";
+
        }
        elsif ($line =~ /^<code>\n/) {
        		$currentLanguage = "";
@@ -341,7 +356,7 @@ echo "Hello Shell"
 CGI::Multiscript is a Perl Module that allows for Perl scripts to run and execute Multiscript files.
 CGI::Multiscript will allow Perl, Python, Ruby or Shell or any other language to coexist in the same external script. 
 The Multiscripts consist of multiple languages separated by code tags and attributes.
-Multiscript files can be executed from a Perl scripti that uses CGI::Multiscript.
+Multiscript files can be executed from a Perl script that uses CGI::Multiscript.
  
 CGI::Multiscript will run an external multiscript program according to the execution options which
 include language, version, name and command line arguments. 

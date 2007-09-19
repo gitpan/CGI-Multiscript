@@ -1,6 +1,10 @@
 Revision history for Perl extension CGI::Multiscript.
+0.74  Sun Sep 18 22:11:49 2007
+	- Added experimental file code tag (which contains no code body)
+	- Updated README file
 0.73  Sun Sep 16 21:35:23 2007
-	- Added parseArgs method and fixed a bug so that versions can run
+	- Added parseArgs method and fixed a bug
+	- Enabled the versions and name and language execution selection
 0.72  Sun Sep 16 14:27:23 2007
 	- Added language execution list and selection
 0.71  Sat Sep 15 22:05:12 2007

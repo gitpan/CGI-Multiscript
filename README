@@ -1,10 +1,78 @@
-CGI-Multiscript version 0.73
+CGI-Multiscript version 0.74
 ============================
 
-A Perl Module that allows for multiscript programming from Perl scripts.
-The program will allow Perl, Python, Ruby or Shell or any other language to coexist in the same multiscript. 
+A Perl Module that allows for Multiscript programming from Perl scripts.
+The program will allow Perl, Python, Ruby or Shell or any other language to coexist in the same Multiscript. 
 Multiscript files can be executed by importing the CGI::Multiscript library and invoking different methods.
-Multiscripts contain programming languages that can be assigned attributes and are dillineated by tags. 
+Multiscripts contain multiple programming languages that are marked by code tags with attributes. 
+
+This is an example of a Perl script that loads module CGI::Multiscript.
+This executes the file test_hello.ms according to the language or version or name selected.
+The Multiscript can be executed with all of the scripts or only selected scripts.
+
+--------------------------
+
+use CGI::Multiscript;
+
+# setdefault sets a default language prefix to use when one doesn't exist
+CGI::Multiscript::setDefault("./");
+CGI::Multiscript::setDefault("sh ");
+print "Default execution ", CGI::Multiscript::getDefault(), "\n";
+
+# new creates an Multiscript file object associated with file test_hello.ms
+$ms = CGI::Multiscript::new('test_hello.ms');
+
+# parseArgs parse command line arguments for the Perl Script.
+$ms->parseArgs(@ARGV);
+
+# addLanguage adds an execution language to the objects execution list
+# This means that if a Multiscript tag is marked with the language
+# attributes of perl or python the execute method will run that script
+$ms->addLanguage('perl');
+$ms->addLanguage('python');
+$ms->displayLangs();
+
+print "Current filename ", $ms->getFilename(), "\n";
+
+# This executes the Multiscript File
+$ms->execute();
+
+--------------------------
+
+This is an example Multiscript file for test_hello.ms. It contains 5 different scripts.
+Each script is separated by a start and end code tag. Each code tag contains attributes
+for the language type and code name and the version or command line arguments.
+
+--------------------------
+
+
+<code lang="perl">
+#!/usr/bin/perl
+print "hello World perl\n";
+</code>
+<code lang="python">
+#!/usr/local/python
+print "Hello World python"
+</code>
+<code lang="ruby" ver="X" name="ix"  args="x">
+puts "Hello World ruby"
+</code>
+<code>
+#!/usr/bin/tcsh
+echo "Hello World csh"
+</code>
+<code>
+#!/usr/bin/bash
+echo "Hello Shell"
+</code>
+
+--------------------------
+
+This is an example of the Multiscript commandline output.
+
+hello World perl
+Hello World ruby
+Hello World csh
 
 
 INSTALLATION
